@@ -41,15 +41,26 @@ with open(out_file, 'wb') as of:
 		etms = (time+timeperiod)*1000
 		for continent in continents:
 			print "Starting continent %s" % (continent["id"])
-			tweetTotals = json.load(urllib2.urlopen("http://wefeel.csiro.au/api/tweets/totals?continent=%s&start=%d&end=%d" % (continent["id"], stms, etms)))
-			#print tweetTotals
+			tweetTotals = None
+			while tweetTotals == None:
+				try:
+					tweetTotals = json.load(urllib2.urlopen("http://wefeel.csiro.au/api/tweets/totals?continent=%s&start=%d&end=%d" % (continent["id"], stms, etms)))
+				except:
+					print "Download of tweet totals failed, retrying after one second."
+					sleep(1)
 			timezones = continent["children"]
 			for timezone in timezones:
 				row = {}
 				tname = timezone["id"]
 				tpath = timezone["path"]
 				for emotion in emotions: 
-					emotionTotals = json.load(urllib2.urlopen("http://wefeel.csiro.au/api/emotions/primary/%s/secondary/totals?continent=%s&start=%d&end=%d&timezone=%s" % (emotion["name"], continent["id"], stms, etms, tname)))
+					emotionTotals = None
+					while emotionTotals == None:
+						try:
+							emotionTotals = json.load(urllib2.urlopen("http://wefeel.csiro.au/api/emotions/primary/%s/secondary/totals?continent=%s&start=%d&end=%d&timezone=%s" % (emotion["name"], continent["id"], stms, etms, tname)))
+						except:
+							print "Download of emotion totals failed, retrying after one second."
+							sleep(1)
 					row.update(emotionTotals)
 				row["timezone"] = tname
 				row["continent"] = continent["id"]
@@ -64,7 +75,7 @@ with open(out_file, 'wb') as of:
 
 				sys.stdout.write('.')
 				sys.stdout.flush()
-				sleep(0.750)
+				sleep(1)
 			print ""
 
 with open("json_finaldata.json", "w") as of:
